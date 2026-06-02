@@ -16,6 +16,7 @@ from PySide6.QtGui import QAction, QKeySequence, QFont, QColor, QPalette, QPixma
 
 from app.config import APP_NAME, VERSION, DATABASE_URL
 from app.views.athlete_page import AthletePage
+from app.views.test_entry_page import TestEntryPage
 from app.core.db import db_session
 from app.models.athlete import Athlete, Group
 from app.models.test_type import TestType
@@ -499,9 +500,12 @@ class MainWindow(QMainWindow):
         self.athlete_page = AthletePage()
         self.stack.addWidget(self.athlete_page)
 
-        # Pages 2–5 — Placeholders (will be replaced later)
+        # Page 2 — Test Entry (real module)
+        self.test_entry_page = TestEntryPage()
+        self.stack.addWidget(self.test_entry_page)
+
+        # Pages 3–5 — Placeholders (will be replaced later)
         placeholders = [
-            ("บันทึกการทดสอบ", "📝", "บันทึกผลการทดสอบสมรรถภาพทางกายพร้อมแสดงการประเมินผลเรียลไทม์"),
             ("เกณฑ์อ้างอิง", "📊", "สร้าง แก้ไข นำเข้า และส่งออกตารางเกณฑ์มาตรฐานสมรรถภาพ"),
             ("วิเคราะห์กลุ่ม", "📈", "ดูข้อมูลสรุปของกลุ่ม/ทีม อันดับ ค่าเฉลี่ย และการกระจายตัวของผลการทดสอบ"),
             ("รายงาน", "📄", "สร้างรายงานแบบบุคคลและแบบกลุ่มในรูปแบบไฟล์ PDF และ Excel"),

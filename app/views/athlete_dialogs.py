@@ -590,7 +590,9 @@ class AthleteFormDialog(QDialog):
         self.txt_email.setText(a.email or "")
         self.txt_notes.setPlainText(a.notes or "")
 
-        if a.photo_path:
+        if hasattr(a, "photo_bytes") and a.photo_bytes:
+            self._show_photo_preview(a.photo_bytes)
+        elif a.photo_path:
             abs_path = self._get_photo_abs_path(a.photo_path)
             if os.path.exists(abs_path):
                 self._show_photo_preview(abs_path)
@@ -631,9 +633,14 @@ class AthleteFormDialog(QDialog):
             self.temp_photo_path = file_path
             self._show_photo_preview(file_path)
 
-    def _show_photo_preview(self, path):
+    def _show_photo_preview(self, path_or_bytes):
         from PySide6.QtGui import QPixmap
-        pixmap = QPixmap(path)
+        pixmap = QPixmap()
+        if isinstance(path_or_bytes, bytes):
+            pixmap.loadFromData(path_or_bytes)
+        else:
+            pixmap.load(path_or_bytes)
+            
         if not pixmap.isNull():
             scaled = pixmap.scaled(
                 150, 150,
@@ -667,33 +674,17 @@ class AthleteFormDialog(QDialog):
         email = self.txt_email.text().strip()
         notes = self.txt_notes.toPlainText().strip()
 
-        photo_path = self.saved_photo_path
+        photo_path = self.athlete.photo_path if self._is_edit else None
+        photo_bytes = self.athlete.photo_bytes if (self._is_edit and hasattr(self.athlete, "photo_bytes")) else None
 
-        # If a new photo was chosen, copy it
+        # If a new photo was chosen, read its bytes
         if self.temp_photo_path:
-            resources_dir = os.path.normpath(os.path.join(CURRENT_DIR, "..", "resources", "photos"))
-            os.makedirs(resources_dir, exist_ok=True)
-
-            import shutil
-            import time
-            _, ext = os.path.splitext(self.temp_photo_path)
-            filename = f"athlete_{int(time.time())}{ext}"
-            dest_path = os.path.join(resources_dir, filename)
-
             try:
-                shutil.copy(self.temp_photo_path, dest_path)
-                photo_path = f"app/resources/photos/{filename}"
-
-                # Remove old photo file if it exists
-                if self.saved_photo_path:
-                    old_abs = self._get_photo_abs_path(self.saved_photo_path)
-                    if os.path.exists(old_abs):
-                        try:
-                            os.remove(old_abs)
-                        except Exception as e:
-                            print(f"Error removing old photo: {e}")
+                with open(self.temp_photo_path, "rb") as f:
+                    photo_bytes = f.read()
+                photo_path = None  # Clear path since we store directly in DB
             except Exception as e:
-                QMessageBox.critical(self, "เกิดข้อผิดพลาด", f"ไม่สามารถบันทึกไฟล์รูปภาพได้:\n{e}")
+                QMessageBox.critical(self, "เกิดข้อผิดพลาด", f"ไม่สามารถอ่านไฟล์รูปภาพได้:\n{e}")
                 return
 
         try:
@@ -709,7 +700,8 @@ class AthleteFormDialog(QDialog):
                     address=address,
                     phone=phone,
                     email=email,
-                    photo_path=photo_path
+                    photo_path=photo_path,
+                    photo_bytes=photo_bytes
                 )
             else:
                 self.service.create_athlete(
@@ -722,7 +714,8 @@ class AthleteFormDialog(QDialog):
                     address=address,
                     phone=phone,
                     email=email,
-                    photo_path=photo_path
+                    photo_path=photo_path,
+                    photo_bytes=photo_bytes
                 )
             self.accept()
         except Exception as e:

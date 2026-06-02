@@ -75,6 +75,7 @@ class AthleteService:
         phone: str = "",
         email: str = "",
         photo_path: Optional[str] = None,
+        photo_bytes: Optional[bytes] = None,
     ) -> Athlete:
         athlete = Athlete(
             first_name=first_name.strip(),
@@ -87,6 +88,7 @@ class AthleteService:
             phone=phone.strip(),
             email=email.strip(),
             photo_path=photo_path,
+            photo_bytes=photo_bytes,
         )
         self.session.add(athlete)
         self.session.commit()
@@ -105,6 +107,7 @@ class AthleteService:
         phone: str = "",
         email: str = "",
         photo_path: Optional[str] = None,
+        photo_bytes: Optional[bytes] = None,
     ) -> Optional[Athlete]:
         athlete = self.get_athlete_by_id(athlete_id)
         if not athlete:
@@ -119,6 +122,7 @@ class AthleteService:
         athlete.phone = phone.strip()
         athlete.email = email.strip()
         athlete.photo_path = photo_path
+        athlete.photo_bytes = photo_bytes
         self.session.commit()
         return athlete
 

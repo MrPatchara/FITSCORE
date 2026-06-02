@@ -480,10 +480,10 @@ class AthletePage(QWidget):
                 border: none;
             }}
             QCheckBox::indicator {{
-                width: 15px;
-                height: 15px;
+                width: 13px;
+                height: 13px;
                 border: 1.5px solid #0f172a; /* Solid dark black-slate border, clearly visible */
-                border-radius: 4px;
+                border-radius: 3px;
                 background-color: white;
             }}
             QCheckBox::indicator:hover {{
@@ -575,11 +575,21 @@ class AthletePage(QWidget):
 
             # Full name with profile photo thumbnail
             name_item = QTableWidgetItem(ath.full_name)
-            if ath.photo_path:
+            pixmap = None
+            if hasattr(ath, "photo_bytes") and ath.photo_bytes:
+                from PySide6.QtGui import QPixmap
+                pm = QPixmap()
+                if pm.loadFromData(ath.photo_bytes):
+                    pixmap = pm
+            elif ath.photo_path:
                 import os
                 abs_path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ath.photo_path))
                 if os.path.exists(abs_path):
-                    name_item.setIcon(QIcon(abs_path))
+                    from PySide6.QtGui import QPixmap
+                    pixmap = QPixmap(abs_path)
+            
+            if pixmap:
+                name_item.setIcon(QIcon(pixmap))
             self.table.setItem(row, 2, name_item)
 
             # Gender

@@ -49,6 +49,7 @@ def _migrate_db():
             ("address", "TEXT"),
             ("phone", "VARCHAR(20)"),
             ("email", "VARCHAR(100)"),
+            ("photo_bytes", "BLOB"),
         ]
         with engine.connect() as conn:
             for col_name, col_type in new_ath_columns:
@@ -70,3 +71,35 @@ def init_db():
     
     _migrate_db()
     Base.metadata.create_all(bind=engine)
+
+    # ── One-time migration: disk photos to DB BLOBs ──
+    try:
+        session = SessionLocal()
+        from app.models.athlete import Athlete
+        from app.config import PROJECT_ROOT
+        
+        athletes = session.query(Athlete).filter(
+            Athlete.photo_path.isnot(None),
+            (Athlete.photo_bytes.is_(None) | (Athlete.photo_bytes == b""))
+        ).all()
+        
+        migrated = 0
+        for ath in athletes:
+            abs_path = PROJECT_ROOT / ath.photo_path
+            if abs_path.is_file():
+                try:
+                    with open(abs_path, "rb") as f:
+                        ath.photo_bytes = f.read()
+                    migrated += 1
+                except Exception as e:
+                    print(f"Error reading photo from {abs_path} for athlete {ath.id}: {e}")
+            else:
+                print(f"Photo file {abs_path} not found for athlete {ath.id}")
+                
+        if migrated > 0:
+            session.commit()
+            print(f"Successfully migrated {migrated} photo(s) to SQLite DB.")
+    except Exception as e:
+        print(f"Photo migration error: {e}")
+    finally:
+        session.close()

@@ -1,5 +1,5 @@
 from datetime import datetime, date, timezone
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text, LargeBinary
 from sqlalchemy.orm import relationship
 from app.core.db import Base
 
@@ -58,6 +58,7 @@ class Athlete(Base):
     gender = Column(String(10), nullable=False)  # 'Male', 'Female', 'Other'
     date_of_birth = Column(Date, nullable=False)
     photo_path = Column(String(255), nullable=True)
+    photo_bytes = Column(LargeBinary, nullable=True)
     group_id = Column(Integer, ForeignKey('groups.id', ondelete='SET NULL'), nullable=True)
     notes = Column(Text, nullable=True)
     
