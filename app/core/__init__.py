@@ -1,0 +1,1 @@
+# FITSCORE Core Package
